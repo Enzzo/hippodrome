@@ -2,6 +2,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -9,6 +12,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mockStatic;
 
 import java.util.List;
 
@@ -21,30 +25,31 @@ class HorseTest {
     //  |   Класс Horse бросает IllegalArgumentException с сообщением           |
     //  |   "Name cannot be null." если name == null                            |
     //  +-----------------------------------------------------------------------+
-    @Test
-    void horseNullName(){
+    @ParameterizedTest
+    @NullSource
+    void horseNullName(String name){
 
         // assert-01
         assertThrows(IllegalArgumentException.class, () -> {
-            new Horse(null, 10.0);                   
+            new Horse(name, 10.0);
         });
         // assert-02
         assertThrows(IllegalArgumentException.class, () -> {
-            new Horse(null, 10.0, 10.0);   
+            new Horse(name, 10.0, 10.0);
         });
 
         String test1 = new String();
         String test2 = new String();
 
         try{
-            Horse testHorse = new Horse(null, 10.0);
+            Horse testHorse = new Horse(name, 10.0);
         }
         catch(IllegalArgumentException e){
             test1 = e.getMessage();
         }
 
         try{
-            Horse testHorse = new Horse(null, 10.0, 10.0);
+            Horse testHorse = new Horse(name, 10.0, 10.0);
         }
         catch(IllegalArgumentException e){
             test2 = e.getMessage();
@@ -62,7 +67,7 @@ class HorseTest {
     //  |   "Name cannot be blank." если name == isBlank                        |
     //  +-----------------------------------------------------------------------+
     @ParameterizedTest
-    @ValueSource(strings = {"", " ", "  ", "   ", "\n", "\t"})
+    @EmptySource
     void horseBlankName(String name){
         // assert-01
         assertThrows(IllegalArgumentException.class, () -> {
@@ -200,15 +205,29 @@ class HorseTest {
     }
 
     //  +-----------------------------------------------------------------------+
-    //  |   horseMoveStaticTest()                                               |
+    //  |   horseGetRandomDoubleStaticTest()                                    |
     //  +-----------------------------------------------------------------------+
     //  |   Метод Horse::move() должен вызвать статический метод,               |
     //  |   static Horse::getRandomDouble(0.2, 0.9)                             |
+    //  |   Сверяется корректность расчёта дистанции                            |
     //  +-----------------------------------------------------------------------+
-    @Test
-    void horseMoveStaticTest(){
-        Horse horse = new Horse("h1", 1, 2);
-        horse.move();
-        Mockito.verify(horse).getRandomDouble(0.2, 0.9);
+    @ParameterizedTest
+    @CsvSource(value = {    "0.0, 0.0, 0.2",
+                            "0.0, 10.0, 0.3",
+                            "10.0, 0.0, 0.4",
+                            "10.0, 10.0, 0.5",
+                            ".1, .1, 0.6",
+                            "10.1, 10.1, 0.7",
+                            "5.5, 5.5, 0.8",
+                            ".9, .9, .9"})
+    void horseGetRandomDoubleStaticTest(double speed, double distance, double randomValue){
+        try(MockedStatic mock = mockStatic(Horse.class)){
+            Horse horse = new Horse("h1", speed, distance);
+            mock.when(() -> Horse.getRandomDouble(0.2, 0.9)).thenReturn(randomValue);
+            horse.move();
+            mock.verify(() -> Horse.getRandomDouble(0.2, 0.9));
+            double expected = distance + speed * randomValue;
+            assertEquals(expected, horse.getDistance());
+        }
     }
 }
