@@ -4,10 +4,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
 class HorseTest {
@@ -194,5 +197,18 @@ class HorseTest {
 
         //  dist == 0.0, если конструктор вызван с двумя параметрами
         assertEquals(0.0, new Horse("horse", 10.0).getDistance());
+    }
+
+    //  +-----------------------------------------------------------------------+
+    //  |   horseMoveStaticTest()                                               |
+    //  +-----------------------------------------------------------------------+
+    //  |   Метод Horse::move() должен вызвать статический метод,               |
+    //  |   static Horse::getRandomDouble(0.2, 0.9)                             |
+    //  +-----------------------------------------------------------------------+
+    @Test
+    void horseMoveStaticTest(){
+        Horse horse = new Horse("h1", 1, 2);
+        horse.move();
+        Mockito.verify(horse).getRandomDouble(0.2, 0.9);
     }
 }
